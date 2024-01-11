@@ -68,45 +68,56 @@ pipeline {
              }
           }
       }
+stage('Push image in staging and deploy it') {
+  when {
+      expression { GIT_BRANCH == 'origin/main' }
+  }
+  agent any
+  environment {
+      HEROKU_API_KEY = credentials('heroku_api_key')
+  }
+  steps {
+     script {
+       sh '''
+          echo "Vérification de la version de Node.js..."
+          node --version
+          echo "Vérification de la version du CLI Heroku..."
+          heroku --version
+          echo "Tentative de connexion à Heroku..."
+          heroku container:login
+          heroku create $STAGING || echo "Le projet existe déjà"
+          heroku container:push -a $STAGING web
+          heroku container:release -a $STAGING web
+       '''
+     }
+  }
+}
+stage('Push image in production and deploy it') {
+  when {
+      expression { GIT_BRANCH == 'origin/main' }
+  }
+  agent any
+  environment {
+      HEROKU_API_KEY = credentials('heroku_api_key')
+  }
+  steps {
+     script {
+       sh '''
+          echo "Vérification de la version de Node.js..."
+          node --version
+          echo "Vérification de la version du CLI Heroku..."
+          heroku --version
+          echo "Tentative de connexion à Heroku..."
+          heroku container:login
+          heroku create $PRODUCTION || echo "Le projet existe déjà"
+          heroku container:push -a $PRODUCTION web
+          heroku container:release -a $PRODUCTION web
+       '''
+     }
+  }
+}
 
-      stage('Push image in staging and deploy it') {
-        when {
-            expression { GIT_BRANCH == 'origin/main' }
-        }
-	agent any
-        environment {
-            HEROKU_API_KEY = credentials('heroku_api_key')
-        }
-        steps {
-           script {
-             sh '''
-                heroku container:login
-                heroku create $STAGING || echo "projets already exist"
-                heroku container:push -a $STAGING web
-                heroku container:release -a $STAGING web
-             '''
-           }
-        }
-     }
-     stage('Push image in production and deploy it') {
-       when {
-           expression { GIT_BRANCH == 'origin/main' }
-       }
-	agent any
-       environment {
-           HEROKU_API_KEY = credentials('heroku_api_key')
-       }
-       steps {
-          script {
-            sh '''
-               heroku container:login
-               heroku create $PRODUCTION || echo "projets already exist"
-               heroku container:push -a $PRODUCTION web
-               heroku container:release -a $PRODUCTION web
-            '''
-          }
-       }
-     }
+      
   }
   post {
      always {
