@@ -1,6 +1,6 @@
 
 FROM nginx:1.21.1
-LABEL maintainer="Hristian DOBE"
+LABEL maintainer="Christian DOBE"
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y curl && \
